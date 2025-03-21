@@ -1,5 +1,13 @@
 {
     "cSpell.enabledFileTypes": {
         "rust": false
+    },
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true
+    },
+    "[toml]": {
+        "editor.defaultFormatter": "tamasfe.even-better-toml",
+        "editor.formatOnSave": true
     }
 }
