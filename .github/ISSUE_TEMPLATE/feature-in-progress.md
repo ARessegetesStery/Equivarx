@@ -14,4 +14,5 @@ assignees: ARessegetesStery
 - [ ] xxxxx
 
 # References
-| it is ok to leave this empty :)
+
+> it is ok to leave this empty :)
