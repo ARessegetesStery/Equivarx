@@ -1,3 +1,10 @@
+[package]
+name = "equivarx"
+version = "0.1.0"
+
 [workspace]
 resolver = "2"
-members = ["crates/*", "eqx_examples/**"]
+members = ["crates/*", "examples/*"]
+
+[dependencies]
+eqx_prelude = { path = "crates/eqx_prelude", version = "0.1.0" }
