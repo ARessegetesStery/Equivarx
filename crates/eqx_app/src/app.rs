@@ -1,0 +1,3 @@
+struct App;
+
+impl App {}

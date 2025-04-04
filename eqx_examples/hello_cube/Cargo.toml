@@ -1,5 +1,5 @@
 [package]
-name = "eqx-render"
+name = "hello_cube"
 version = "0.1.0"
 edition = "2021"
 

@@ -1,0 +1,8 @@
+[package]
+name = "eqx_app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+env_logger = "0.9"
+eqx_window = { path = "../eqx_window", version = "0.1.0" }
