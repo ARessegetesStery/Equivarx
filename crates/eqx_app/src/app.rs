@@ -1,9 +1,9 @@
-use crate::feature::Feature;
+use crate::module::Module;
 use env_logger;
 use log::{info, LevelFilter};
 
 pub struct App {
-    enabled_features: Vec<Box<dyn Feature>>,
+    enabled_modules: Vec<Box<dyn Module>>,
 }
 
 impl App {
@@ -17,7 +17,7 @@ impl App {
 impl Default for App {
     fn default() -> Self {
         Self {
-            enabled_features: vec![],
+            enabled_modules: vec![],
         }
     }
 }

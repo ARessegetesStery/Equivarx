@@ -1,2 +1,2 @@
 pub use crate::app::App;
-pub use crate::feature::Feature;
+pub use crate::module::Module;
