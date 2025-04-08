@@ -1,5 +1,7 @@
-use equivarx::App;
+use equivarx::{App, Window};
 
 fn main() {
-    App::init();
+    App::init()
+        .load_modules(vec![Box::new(Window::default())])
+        .run();
 }
