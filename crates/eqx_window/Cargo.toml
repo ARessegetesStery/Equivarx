@@ -10,3 +10,4 @@ cgmath = "0.18"
 log = "0.4"
 wgpu = "0.12"
 pollster = "0.2"
+eqx_app = { path = "../eqx_app", version = "0.1.0" }

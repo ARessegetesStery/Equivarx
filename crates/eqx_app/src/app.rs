@@ -12,6 +12,10 @@ impl App {
         info!("App initialized");
         Self::default()
     }
+
+    fn add_module(&mut self, module: Box<dyn Module>) {
+        self.enabled_modules.push(module);
+    }
 }
 
 impl Default for App {

@@ -1,4 +1,7 @@
-pub mod prelude;
+mod app;
+mod module;
 
-pub mod app;
-pub mod module;
+pub mod prelude {
+    pub use crate::app::App;
+    pub use crate::module::Module;
+}

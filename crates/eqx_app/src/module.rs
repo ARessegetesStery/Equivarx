@@ -1,1 +1,3 @@
-pub trait Module {}
+pub trait Module {
+    fn init(&self);
+}

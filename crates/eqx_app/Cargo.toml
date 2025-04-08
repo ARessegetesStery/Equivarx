@@ -6,4 +6,3 @@ edition = "2021"
 [dependencies]
 env_logger = "0.9"
 log = "0.4"
-eqx_window = { path = "../eqx_window", version = "0.1.0" }

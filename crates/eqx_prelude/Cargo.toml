@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 eqx_app = { path = "../eqx_app", version = "0.1.0" }
+eqx_window = { path = "../eqx_window", version = "0.1.0" }
