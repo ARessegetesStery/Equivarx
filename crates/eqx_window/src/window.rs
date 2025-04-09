@@ -1,5 +1,4 @@
 use eqx_app::prelude::Module;
-use wgpu::{MemoryHints, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor};
 
 use winit::{
     event::*,
@@ -50,7 +49,7 @@ impl<'a> State<'a> {
                     label: None,
                     required_limits: wgpu::Limits::default(),
                     required_features: wgpu::Features::default(),
-                    memory_hints: MemoryHints::default(),
+                    memory_hints: wgpu::MemoryHints::default(),
                 },
                 None,
             )
@@ -91,7 +90,7 @@ impl<'a> State<'a> {
                 push_constant_ranges: &[],
             });
 
-        let render_pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
+        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("RenderPipeline"),
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
@@ -145,7 +144,7 @@ impl<'a> State<'a> {
     }
 
     fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
-        if (size.width > 0 && size.height > 0) {
+        if size.width > 0 && size.height > 0 {
             self.size = size;
             self.config.width = size.width;
             self.config.height = size.height;
@@ -154,7 +153,9 @@ impl<'a> State<'a> {
     }
 
     fn process_input(&self, event: &WindowEvent) -> bool {
-        false
+        match event {
+            _ => false,
+        }
     }
 
     fn update(&self) {}
@@ -173,7 +174,7 @@ impl<'a> State<'a> {
             });
 
         {
-            let mut render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("RenderPass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
@@ -227,7 +228,7 @@ impl Module for WindowDisplay {
                     ref event,
                     window_id,
                 } if window_id == state.window.id() => {
-                    if (!state.process_input(event)) {
+                    if !state.process_input(event) {
                         match event {
                             WindowEvent::CloseRequested
                             | WindowEvent::KeyboardInput {
