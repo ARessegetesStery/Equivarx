@@ -1,5 +1,5 @@
 use eqx_app::prelude::Module;
-use wgpu::{MemoryHints, RenderPassDescriptor};
+use wgpu::{MemoryHints, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor};
 
 use winit::{
     event::*,
@@ -10,6 +10,9 @@ use winit::{
 
 use winit::window::Window as WInitWindow;
 
+const VS_MAIN: &str = "vs_main";
+const FS_MAIN: &str = "fs_main";
+
 struct State<'a> {
     surface: wgpu::Surface<'a>,
     device: wgpu::Device,
@@ -17,9 +20,11 @@ struct State<'a> {
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
     window: &'a WInitWindow,
+    render_pipeline: wgpu::RenderPipeline,
 }
 
 impl<'a> State<'a> {
+    /// Accepts only mesh with counter-clockwise winding
     async fn new(window: &'a WInitWindow) -> State<'a> {
         let size = window.inner_size();
 
@@ -72,6 +77,58 @@ impl<'a> State<'a> {
             desired_maximum_frame_latency: 2,
         };
 
+        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("TrigShader"),
+            source: wgpu::ShaderSource::Wgsl(
+                include_str!("../../../shaders/trig/shader.wgsl").into(),
+            ),
+        });
+
+        let render_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("RenderPipelineLayout"),
+                bind_group_layouts: &[],
+                push_constant_ranges: &[],
+            });
+
+        let render_pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
+            label: Some("RenderPipeline"),
+            layout: Some(&render_pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: Some(VS_MAIN),
+                buffers: &[],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: Some(FS_MAIN),
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: config.format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            }),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: Some(wgpu::Face::Back),
+                polygon_mode: wgpu::PolygonMode::Fill,
+                unclipped_depth: false,
+                conservative: false,
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,                         // TODO: check multi-sampling
+                mask: !0,                         // enable all the mask bits
+                alpha_to_coverage_enabled: false, // TODO: check anti-aliasing
+            },
+            multiview: None,
+            cache: None,
+        });
+
         Self {
             surface,
             device,
@@ -79,6 +136,7 @@ impl<'a> State<'a> {
             config,
             size,
             window,
+            render_pipeline,
         }
     }
 
@@ -95,7 +153,7 @@ impl<'a> State<'a> {
         }
     }
 
-    fn fully_processed(&self, event: &WindowEvent) -> bool {
+    fn process_input(&self, event: &WindowEvent) -> bool {
         false
     }
 
@@ -115,7 +173,7 @@ impl<'a> State<'a> {
             });
 
         {
-            let _render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
+            let mut render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
                 label: Some("RenderPass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
@@ -134,6 +192,9 @@ impl<'a> State<'a> {
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
+
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.draw(0..3, 0..1)
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
@@ -143,6 +204,7 @@ impl<'a> State<'a> {
     }
 }
 
+// TODO: refactor this class, so that more utilities (e.g. `Input`) can be integrated
 pub struct WindowDisplay {}
 
 impl Default for WindowDisplay {
@@ -165,7 +227,7 @@ impl Module for WindowDisplay {
                     ref event,
                     window_id,
                 } if window_id == state.window.id() => {
-                    if (!state.fully_processed(event)) {
+                    if (!state.process_input(event)) {
                         match event {
                             WindowEvent::CloseRequested
                             | WindowEvent::KeyboardInput {
