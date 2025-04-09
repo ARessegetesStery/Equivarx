@@ -1,5 +1,5 @@
 mod window;
 
 pub mod prelude {
-    pub use crate::window::Window;
+    pub use crate::window::WindowDisplay;
 }
