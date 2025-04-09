@@ -152,10 +152,8 @@ impl<'a> State<'a> {
         }
     }
 
-    fn process_input(&self, event: &WindowEvent) -> bool {
-        match event {
-            _ => false,
-        }
+    fn process_input(&self) -> bool {
+        false
     }
 
     fn update(&self) {}
@@ -206,13 +204,8 @@ impl<'a> State<'a> {
 }
 
 // TODO: refactor this class, so that more utilities (e.g. `Input`) can be integrated
+#[derive(Default)]
 pub struct WindowDisplay {}
-
-impl Default for WindowDisplay {
-    fn default() -> Self {
-        WindowDisplay {}
-    }
-}
 
 impl Module for WindowDisplay {
     fn setup(&mut self) {}
@@ -228,7 +221,7 @@ impl Module for WindowDisplay {
                     ref event,
                     window_id,
                 } if window_id == state.window.id() => {
-                    if !state.process_input(event) {
+                    if !state.process_input() {
                         match event {
                             WindowEvent::CloseRequested
                             | WindowEvent::KeyboardInput {
