@@ -13,6 +13,6 @@ macro_rules! shader_src {
 #[macro_export]
 macro_rules! asset_file {
     ($path:literal) => {
-        include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../assets/", $path))
+        include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../assets/", $path))
     };
 }
