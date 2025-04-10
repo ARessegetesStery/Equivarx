@@ -1,3 +1,7 @@
+use wgpu::util::{BufferInitDescriptor, DeviceExt};
+
+use crate::primitives::{Vertex, TEST_INDICES, TEST_VERTICES};
+
 use eqx_app::prelude::Module;
 
 use winit::{
@@ -20,6 +24,8 @@ struct State<'a> {
     size: winit::dpi::PhysicalSize<u32>,
     window: &'a WInitWindow,
     render_pipeline: wgpu::RenderPipeline,
+    vertex_buffer: wgpu::Buffer,
+    index_buffer: wgpu::Buffer,
 }
 
 impl<'a> State<'a> {
@@ -96,7 +102,7 @@ impl<'a> State<'a> {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: Some(VS_MAIN),
-                buffers: &[],
+                buffers: &[Vertex::descriptor()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -128,6 +134,18 @@ impl<'a> State<'a> {
             cache: None,
         });
 
+        let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
+            label: Some("VertexBuffer"),
+            contents: bytemuck::cast_slice(TEST_VERTICES),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+
+        let index_buffer = device.create_buffer_init(&BufferInitDescriptor {
+            label: Some("IndexBuffer"),
+            contents: bytemuck::cast_slice(TEST_INDICES),
+            usage: wgpu::BufferUsages::INDEX,
+        });
+
         Self {
             surface,
             device,
@@ -136,6 +154,8 @@ impl<'a> State<'a> {
             size,
             window,
             render_pipeline,
+            vertex_buffer,
+            index_buffer,
         }
     }
 
@@ -193,7 +213,9 @@ impl<'a> State<'a> {
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.draw(0..3, 0..1)
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.draw_indexed(0..TEST_INDICES.len() as u32, 0, 0..1);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));

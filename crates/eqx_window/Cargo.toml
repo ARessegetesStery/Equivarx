@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 winit = { version = "0.29", features = ["rwh_05"] }
+bytemuck = { version = "1.22", features = ["derive"] }
 cgmath = "0.18"
 log = "0.4"
 wgpu = "24.0"
