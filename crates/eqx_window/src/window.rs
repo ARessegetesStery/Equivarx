@@ -84,9 +84,7 @@ impl<'a> State<'a> {
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("TrigShader"),
-            source: wgpu::ShaderSource::Wgsl(
-                include_str!("../../../shaders/trig/shader.wgsl").into(),
-            ),
+            source: wgpu::ShaderSource::Wgsl(eqx_core::shader_src!("trig/shader").into()),
         });
 
         let render_pipeline_layout =
