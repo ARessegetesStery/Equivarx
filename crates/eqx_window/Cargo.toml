@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0"
 bytemuck = { version = "1.22", features = ["derive"] }
 eqx_core = { path = "../eqx_core", version = "0.1.0" }
 cgmath = "0.18"
