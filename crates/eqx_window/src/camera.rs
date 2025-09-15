@@ -1,4 +1,5 @@
-pub use glam::{Mat4, Vec3};
+use bytemuck::{Pod, Zeroable};
+use glam::{Mat4, Vec3};
 
 pub struct Camera {
     pub pos: Vec3,
@@ -21,8 +22,27 @@ impl Camera {
         );
 
         let view = Mat4::look_at_rh(self.pos, self.target, self.up);
-        let projection = Mat4::perspective_rh(self.aspect, self.fov, self.near_clip, self.far_clip);
+        let projection = Mat4::perspective_rh(self.fov, self.aspect, self.near_clip, self.far_clip);
 
         OPENGL_TO_WGPU_MATRIX * projection * view
+    }
+}
+
+// Refrain from switching to encase: deriving `ShaderType` using `impl_matrix!` is very hard to use
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Pod, Zeroable)]
+pub struct CameraUniform {
+    view_proj: [[f32; 4]; 4],
+}
+
+impl CameraUniform {
+    pub fn new() -> Self {
+        Self {
+            view_proj: Mat4::IDENTITY.to_cols_array_2d(),
+        }
+    }
+
+    pub fn update_view_proj(&mut self, camera: &Camera) {
+        self.view_proj = camera.view_projection_matrix().to_cols_array_2d();
     }
 }

@@ -1,6 +1,7 @@
-// TODO: change from bytemuck to encase for automatic padding/alignment
+use bytemuck::{Pod, Zeroable};
+
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Zeroable, bytemuck::Pod)]
+#[derive(Clone, Copy, Debug, Pod, Zeroable)]
 pub struct Vertex {
     position: [f32; 3],
     color: [f32; 3],

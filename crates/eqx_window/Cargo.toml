@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+eqx_core = { path = "../eqx_core", version = "0.1.0" }
+
 anyhow = "1.0"
 bytemuck = { version = "1.22", features = ["derive"] }
-eqx_core = { path = "../eqx_core", version = "0.1.0" }
 glam = "0.30"
 eqx_app = { path = "../eqx_app", version = "0.1.0" }
 image = { version = "0.25", default-features = false, features = ["png"] }
