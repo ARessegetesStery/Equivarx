@@ -1,17 +1,18 @@
+use crate::camera::Camera;
 use crate::primitives::{Vertex, TEST_INDICES, TEST_VERTICES};
 use crate::texture::Texture;
 use eqx_app::prelude::Module;
-use wgpu::util::{BufferInitDescriptor, DeviceExt};
+use eqx_core::shader_src_from;
 
+use glam::Vec3;
+use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use winit::{
     event::*,
     event_loop::EventLoop,
     keyboard::{KeyCode, PhysicalKey},
+    window::Window as WInitWindow,
     window::WindowBuilder,
 };
-
-use eqx_core::shader_src_from;
-use winit::window::Window as WInitWindow;
 
 const VS_MAIN: &str = "vs_main";
 const FS_MAIN: &str = "fs_main";
@@ -27,6 +28,7 @@ struct State<'a> {
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     texture_bind_group: wgpu::BindGroup,
+    camera: Camera,
 }
 
 impl<'a> State<'a> {
@@ -189,6 +191,16 @@ impl<'a> State<'a> {
             usage: wgpu::BufferUsages::INDEX,
         });
 
+        let camera = Camera {
+            pos: Vec3::new(0.0, 1.0, 2.0),
+            target: Vec3::new(0.0, 0.0, 0.0),
+            up: Vec3::new(0.0, 1.0, 0.0),
+            aspect: config.width as f32 / config.height as f32,
+            fov: 45.0,
+            near_clip: 0.1,
+            far_clip: 100.0,
+        };
+
         Self {
             surface,
             device,
@@ -200,6 +212,7 @@ impl<'a> State<'a> {
             vertex_buffer,
             index_buffer,
             texture_bind_group,
+            camera,
         }
     }
 

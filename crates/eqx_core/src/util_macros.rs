@@ -1,3 +1,4 @@
+// TODO: remove these. Path concatenation should be done in runtime
 #[macro_export]
 macro_rules! shader_src_from {
     ($path:expr) => {{
