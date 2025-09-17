@@ -1,5 +1,5 @@
 use anyhow::Result;
-use eqx_core::asset_file_path;
+use eqx_utils::asset_file_path;
 use std::fs;
 
 pub struct Texture {

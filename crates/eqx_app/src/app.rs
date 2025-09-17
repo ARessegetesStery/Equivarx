@@ -1,5 +1,5 @@
 use crate::module::Module;
-use log::{info, LevelFilter};
+use log::{error, info, LevelFilter};
 
 #[derive(Default)]
 pub struct App {
@@ -24,6 +24,7 @@ impl App {
         for module in &mut self.enabled_modules {
             module.setup();
             module.init();
+            error!("finished initialization");
         }
     }
 }

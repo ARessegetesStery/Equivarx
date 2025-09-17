@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-eqx_core = { path = "../eqx_core", version = "0.1.0" }
+eqx_utils = { path = "../eqx_utils", version = "0.1.0" }
 
 anyhow = "1.0"
 bytemuck = { version = "1.22", features = ["derive"] }

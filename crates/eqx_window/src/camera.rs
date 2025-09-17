@@ -1,5 +1,7 @@
 use bytemuck::{Pod, Zeroable};
+use eqx_utils::input::{Input, KeyState};
 use glam::{Mat4, Vec3};
+use winit::keyboard::KeyCode;
 
 pub struct Camera {
     pub pos: Vec3,
@@ -44,5 +46,58 @@ impl CameraUniform {
 
     pub fn update_view_proj(&mut self, camera: &Camera) {
         self.view_proj = camera.view_projection_matrix().to_cols_array_2d();
+    }
+}
+
+pub struct CameraController {
+    pub speed: f32,
+}
+
+impl CameraController {
+    pub fn new(speed: f32) -> Self {
+        Self { speed }
+    }
+
+    pub fn update_camera(&self, camera: &mut Camera, input: &Input) {
+        let forward = camera.target - camera.pos;
+        let forward_norm = forward.normalize();
+        let forward_mag = forward.length();
+
+        let forward_pressed = input.lookup(&KeyCode::KeyW) == KeyState::Pressed
+            || input.lookup(&KeyCode::ArrowUp) == KeyState::Pressed;
+
+        let backward_pressed = input.lookup(&KeyCode::KeyS) == KeyState::Pressed
+            || input.lookup(&KeyCode::ArrowDown) == KeyState::Pressed;
+
+        let right_pressed = input.lookup(&KeyCode::KeyD) == KeyState::Pressed
+            || input.lookup(&KeyCode::ArrowRight) == KeyState::Pressed;
+
+        let left_pressed = input.lookup(&KeyCode::KeyA) == KeyState::Pressed
+            || input.lookup(&KeyCode::ArrowLeft) == KeyState::Pressed;
+
+        // Prevents glitching when the camera gets too close to the
+        // center of the scene.
+        if forward_pressed && forward_mag > self.speed {
+            camera.pos += forward_norm * self.speed;
+        }
+        if backward_pressed {
+            camera.pos -= forward_norm * self.speed;
+        }
+
+        let right = forward_norm.cross(camera.up);
+
+        // Redo radius calc in case the forward/backward is pressed.
+        let forward = camera.target - camera.pos;
+        let forward_mag = forward.length();
+
+        if right_pressed {
+            // Rescale the distance between the target and the eye so
+            // that it doesn't change. The eye, therefore, still
+            // lies on the circle made by the target and eye.
+            camera.pos = camera.target - (forward + right * self.speed).normalize() * forward_mag;
+        }
+        if left_pressed {
+            camera.pos = camera.target - (forward - right * self.speed).normalize() * forward_mag;
+        }
     }
 }

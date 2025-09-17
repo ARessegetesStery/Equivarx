@@ -1,8 +1,11 @@
-use crate::camera::{Camera, CameraUniform};
+use crate::camera::{Camera, CameraController, CameraUniform};
 use crate::primitives::{Vertex, TEST_INDICES, TEST_VERTICES};
 use crate::texture::Texture;
 use eqx_app::prelude::Module;
-use eqx_core::shader_src_from;
+use eqx_utils::{
+    input::{Input, KeyState},
+    shader_src_from,
+};
 
 use glam::Vec3;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
@@ -36,9 +39,11 @@ struct State<'a> {
     // bind groups
     camera_bind_group: wgpu::BindGroup,
     texture_bind_group: wgpu::BindGroup,
-    // camera
+    // camera & misc
     camera: Camera,
     camera_uniform: CameraUniform,
+    camera_controller: CameraController,
+    input: Input,
 }
 
 impl<'a> State<'a> {
@@ -179,6 +184,8 @@ impl<'a> State<'a> {
             }],
         });
 
+        let camera_controller = CameraController::new(0.2);
+
         let shader_str = shader_src_from!("trig/shader");
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -258,6 +265,8 @@ impl<'a> State<'a> {
             texture_bind_group,
             camera,
             camera_uniform,
+            camera_controller,
+            input: Default::default(),
         }
     }
 
@@ -274,11 +283,38 @@ impl<'a> State<'a> {
         }
     }
 
-    fn process_input(&self) -> bool {
-        false
+    fn process_input(&mut self, event: &WindowEvent) -> bool {
+        match event {
+            WindowEvent::KeyboardInput {
+                event:
+                    KeyEvent {
+                        state,
+                        physical_key: PhysicalKey::Code(code),
+                        ..
+                    },
+                ..
+            } => {
+                let state = match state {
+                    ElementState::Pressed => KeyState::Pressed,
+                    ElementState::Released => KeyState::Released,
+                };
+                self.input.record(code.clone(), state);
+                true
+            }
+            _ => false,
+        }
     }
 
-    fn update(&self) {}
+    fn update(&mut self) {
+        self.camera_controller
+            .update_camera(&mut self.camera, &self.input);
+        self.camera_uniform.update_view_proj(&self.camera);
+        self.queue.write_buffer(
+            &self.camera_buffer,
+            0,
+            bytemuck::cast_slice(&[self.camera_uniform]),
+        );
+    }
 
     fn render(&self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
@@ -336,6 +372,7 @@ pub struct WindowDisplay {}
 impl Module for WindowDisplay {
     fn setup(&mut self) {}
 
+    // TODO: make this async, so non-rendering updates can be done here as well. This is also *loop*, not init.
     fn init(&mut self) {
         let event_loop = EventLoop::new().unwrap();
         let window = WindowBuilder::new().build(&event_loop).unwrap();
@@ -347,7 +384,7 @@ impl Module for WindowDisplay {
                     ref event,
                     window_id,
                 } if window_id == state.window.id() => {
-                    if !state.process_input() {
+                    if !state.process_input(event) {
                         match event {
                             WindowEvent::CloseRequested
                             | WindowEvent::KeyboardInput {
@@ -393,4 +430,6 @@ impl Module for WindowDisplay {
             })
             .unwrap();
     }
+
+    fn update(&mut self) {}
 }
