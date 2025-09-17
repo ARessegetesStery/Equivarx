@@ -1,5 +1,8 @@
 use crate::camera::{Camera, CameraController, CameraUniform};
-use crate::primitives::{Vertex, TEST_INDICES, TEST_VERTICES};
+use crate::primitives::{
+    Instance, InstanceRaw, Vertex, INSTANCE_DISPLACEMENT, NUM_INSTANCES_PER_ROW, TEST_INDICES,
+    TEST_VERTICES,
+};
 use crate::texture::Texture;
 use eqx_app::prelude::Module;
 use eqx_utils::{
@@ -7,7 +10,7 @@ use eqx_utils::{
     shader_src_from,
 };
 
-use glam::Vec3;
+use glam::{Quat, Vec3};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::BindGroupLayoutDescriptor;
 use winit::{
@@ -44,6 +47,9 @@ struct State<'a> {
     camera_uniform: CameraUniform,
     camera_controller: CameraController,
     input: Input,
+    // instances
+    instances: Vec<Instance>,
+    instance_buffer: wgpu::Buffer,
 }
 
 impl<'a> State<'a> {
@@ -206,7 +212,7 @@ impl<'a> State<'a> {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: Some(VS_MAIN),
-                buffers: &[Vertex::descriptor()],
+                buffers: &[Vertex::descriptor(), InstanceRaw::descriptor()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -250,6 +256,36 @@ impl<'a> State<'a> {
             usage: wgpu::BufferUsages::INDEX,
         });
 
+        let instances = (0..NUM_INSTANCES_PER_ROW)
+            .flat_map(|z| {
+                (0..NUM_INSTANCES_PER_ROW).map(move |x| {
+                    let position = Vec3 {
+                        x: x as f32,
+                        y: 0.0,
+                        z: z as f32,
+                    } - INSTANCE_DISPLACEMENT;
+
+                    let rotation = if position == Vec3::ZERO {
+                        // this is needed so an object at (0, 0, 0) won't get scaled to zero
+                        // as Quaternions can affect scale if they're not created correctly
+                        Quat::from_axis_angle(Vec3::Z, 0.0)
+                    } else {
+                        Quat::from_axis_angle(position.normalize(), 45.0)
+                    };
+
+                    Instance { position, rotation }
+                })
+            })
+            .collect::<Vec<_>>();
+
+        let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+
+        let instance_buffer = device.create_buffer_init(&BufferInitDescriptor {
+            label: Some("InstanceBuffer"),
+            contents: bytemuck::cast_slice(&instance_data),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+
         Self {
             window,
             surface,
@@ -267,6 +303,8 @@ impl<'a> State<'a> {
             camera_uniform,
             camera_controller,
             input: Default::default(),
+            instances,
+            instance_buffer,
         }
     }
 
@@ -354,8 +392,13 @@ impl<'a> State<'a> {
             render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..TEST_INDICES.len() as u32, 0, 0..1);
+            render_pass.draw_indexed(
+                0..TEST_INDICES.len() as u32,
+                0,
+                0..self.instances.len() as u32,
+            );
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
