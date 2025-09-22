@@ -13,7 +13,7 @@ use eqx_utils::{
 use crate::texture;
 use glam::{Quat, Vec3};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
-use wgpu::BindGroupLayoutDescriptor;
+use wgpu::{BindGroupLayoutDescriptor, Trace};
 use winit::{
     event::*,
     event_loop::EventLoop,
@@ -82,8 +82,8 @@ impl<'a> State<'a> {
                     required_limits: wgpu::Limits::default(),
                     required_features: wgpu::Features::default(),
                     memory_hints: wgpu::MemoryHints::default(),
+                    trace: Trace::Off
                 },
-                None,
             )
             .await
             .unwrap();
@@ -386,6 +386,7 @@ impl<'a> State<'a> {
                 label: Some("RenderPass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
+                    depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
