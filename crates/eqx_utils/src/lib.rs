@@ -3,4 +3,5 @@
 */
 
 pub mod input;
+pub mod setup;
 mod util_macros;

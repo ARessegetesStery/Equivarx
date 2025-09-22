@@ -1,6 +1,4 @@
 use anyhow::Result;
-use eqx_utils::asset_file_path;
-use std::fs;
 
 pub struct Texture {
     #[allow(unused)]
@@ -12,12 +10,23 @@ pub struct Texture {
 impl Texture {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
-    pub fn new_from(path: String, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Self> {
-        let path = asset_file_path!(path);
-        let bytes = fs::read(path)?;
-        let raw_bytes = bytes.as_slice();
-        let img = image::load_from_memory(raw_bytes)?;
-        let rgba = img.to_rgba8();
+    pub fn from_bytes(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        bytes: &[u8],
+        label: Option<&str>,
+    ) -> Result<Self> {
+        let image = image::load_from_memory(bytes)?;
+        Self::from_image(device, queue, &image, label)
+    }
+
+    pub fn from_image(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        image: &image::DynamicImage,
+        label: Option<&str>,
+    ) -> Result<Self> {
+        let rgba = image.to_rgba8();
         let dimensions = rgba.dimensions();
         let size = wgpu::Extent3d {
             width: dimensions.0,
@@ -26,7 +35,7 @@ impl Texture {
         };
 
         let texture = device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("Texture"),
+            label,
             size,
             mip_level_count: 1,
             sample_count: 1,

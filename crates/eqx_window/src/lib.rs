@@ -5,6 +5,7 @@ There is a separate crate `eqx_render` for deeper rendering algorithms
 
 mod camera;
 mod primitives;
+mod resource;
 mod texture;
 mod window_display;
 

@@ -1,11 +1,13 @@
 use crate::camera::{Camera, CameraController, CameraUniform};
 use crate::primitives::{
-    Instance, InstanceRaw, Vertex, INSTANCE_DISPLACEMENT, NUM_INSTANCES_PER_ROW, TEST_INDICES,
-    TEST_VERTICES,
+    Instance, InstanceRaw, ModelVertex, Vertex, INSTANCE_DISPLACEMENT, NUM_INSTANCES_PER_ROW,
+    TEST_INDICES, TEST_VERTICES,
 };
+use crate::resource::load_texture;
 use crate::texture::Texture;
 use eqx_app::prelude::Module;
 use eqx_utils::{
+    asset_file_path,
     input::{Input, KeyState},
     shader_src_from,
 };
@@ -76,15 +78,13 @@ impl<'a> State<'a> {
             .unwrap();
 
         let (device, queue) = adaptor
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    required_limits: wgpu::Limits::default(),
-                    required_features: wgpu::Features::default(),
-                    memory_hints: wgpu::MemoryHints::default(),
-                    trace: Trace::Off
-                },
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                label: None,
+                required_limits: wgpu::Limits::default(),
+                required_features: wgpu::Features::default(),
+                memory_hints: wgpu::MemoryHints::default(),
+                trace: Trace::Off,
+            })
             .await
             .unwrap();
 
@@ -108,8 +108,9 @@ impl<'a> State<'a> {
             desired_maximum_frame_latency: 2,
         };
 
-        let texture =
-            Texture::new_from(String::from("texture/test_tree.png"), &device, &queue).unwrap();
+        let texture = load_texture("texture/test_tree.png", &device, &queue)
+            .await
+            .unwrap();
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -216,7 +217,7 @@ impl<'a> State<'a> {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: Some(VS_MAIN),
-                buffers: &[Vertex::descriptor(), InstanceRaw::descriptor()],
+                buffers: &[ModelVertex::descriptor(), InstanceRaw::descriptor()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
