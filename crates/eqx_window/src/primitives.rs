@@ -1,12 +1,14 @@
+use crate::texture;
 use bytemuck::{Pod, Zeroable};
 use glam::{Quat, Vec3};
+use std::ops::Range;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
 pub struct ModelVertex {
-    position: [f32; 3],
-    tex_coords: [f32; 2],
-    normal: [f32; 3],
+    pub position: [f32; 3],
+    pub tex_coords: [f32; 2],
+    pub normal: [f32; 3],
 }
 
 pub trait Vertex {
@@ -50,8 +52,81 @@ pub struct Mesh {
 
 pub struct Material {
     pub name: String,
-    pub diffuse_texture: wgpu::Texture,
+    pub diffuse_texture: texture::Texture,
     pub bind_group: wgpu::BindGroup,
+}
+
+pub struct Model {
+    pub meshes: Vec<Mesh>,
+    pub materials: Vec<Material>,
+}
+
+pub trait ModelRender<'a> {
+    fn render_mesh(
+        &mut self,
+        mesh: &'a Mesh,
+        material: &'a Material,
+        camera_bind_group: &'a wgpu::BindGroup,
+    );
+    fn render_mesh_instanced(
+        &mut self,
+        mesh: &'a Mesh,
+        material: &'a Material,
+        camera_bind_group: &'a wgpu::BindGroup,
+        instances: Range<u32>,
+    );
+
+    fn render_model(&mut self, model: &'a Model, camera_bind_group: &'a wgpu::BindGroup);
+    fn render_model_instanced(
+        &mut self,
+        model: &'a Model,
+        camera_bind_group: &'a wgpu::BindGroup,
+        instances: Range<u32>,
+    );
+}
+
+impl<'a, 'b> ModelRender<'a> for wgpu::RenderPass<'b>
+where
+    'a: 'b,
+{
+    fn render_mesh(
+        &mut self,
+        mesh: &'a Mesh,
+        material: &'a Material,
+        camera_bind_group: &'a wgpu::BindGroup,
+    ) {
+        self.render_mesh_instanced(mesh, material, camera_bind_group, 0..1);
+    }
+
+    fn render_mesh_instanced(
+        &mut self,
+        mesh: &'a Mesh,
+        material: &'a Material,
+        camera_bind_group: &'a wgpu::BindGroup,
+        instances: std::ops::Range<u32>,
+    ) {
+        self.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+        self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+        self.set_bind_group(0, &material.bind_group, &[]);
+        self.set_bind_group(1, camera_bind_group, &[]);
+        self.draw_indexed(0..mesh.num_elements, 0, instances);
+    }
+    
+    fn render_model(&mut self, model: &'a Model, camera_bind_group: &'a wgpu::BindGroup) {
+        self.render_model_instanced(model, camera_bind_group, 0..1);
+    }
+    
+    fn render_model_instanced(
+        &mut self,
+        model: &'a Model,
+        camera_bind_group: &'a wgpu::BindGroup,
+        instances: std::ops::Range<u32>,
+    ) {
+        for mesh in &model.meshes {
+            let material = &model.materials[mesh.material];
+            self.render_mesh_instanced(mesh, material, camera_bind_group, instances.clone());
+        }
+    }
 }
 
 pub const TEST_VERTICES: &[ModelVertex] = &[

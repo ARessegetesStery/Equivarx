@@ -1,6 +1,8 @@
 use equivarx::{App, WindowDisplay};
+use tokio;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     println!("OUT_DIR = {}", std::env::var("OUT_DIR").unwrap());
 
     App::init()

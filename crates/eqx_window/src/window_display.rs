@@ -3,16 +3,16 @@ use crate::primitives::{
     Instance, InstanceRaw, ModelVertex, Vertex, INSTANCE_DISPLACEMENT, NUM_INSTANCES_PER_ROW,
     TEST_INDICES, TEST_VERTICES,
 };
-use crate::resource::load_texture;
+use crate::primitives::{Model, ModelRender};
+use crate::resource::{file_name_to_path, load_model, load_texture};
 use crate::texture::Texture;
 use eqx_app::prelude::Module;
 use eqx_utils::{
-    asset_file_path,
     input::{Input, KeyState},
     shader_src_from,
 };
 
-use crate::texture;
+use crate::{primitives, texture};
 use glam::{Quat, Vec3};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{BindGroupLayoutDescriptor, Trace};
@@ -54,6 +54,8 @@ struct State<'a> {
     // instances
     instances: Vec<Instance>,
     instance_buffer: wgpu::Buffer,
+    // models
+    model: Model,
 }
 
 impl<'a> State<'a> {
@@ -108,9 +110,15 @@ impl<'a> State<'a> {
             desired_maximum_frame_latency: 2,
         };
 
-        let texture = load_texture("texture/test_tree.png", &device, &queue)
-            .await
-            .unwrap();
+        let rel_texture_path = "texture/test_tree.png";
+        let texture = load_texture(
+            file_name_to_path(rel_texture_path).unwrap().as_path(),
+            "test_tree",
+            &device,
+            &queue,
+        )
+        .await
+        .unwrap();
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -267,14 +275,14 @@ impl<'a> State<'a> {
             usage: wgpu::BufferUsages::INDEX,
         });
 
+        const SPACE_BETWEEN: f32 = 3.0;
         let instances = (0..NUM_INSTANCES_PER_ROW)
             .flat_map(|z| {
                 (0..NUM_INSTANCES_PER_ROW).map(move |x| {
-                    let position = Vec3 {
-                        x: x as f32,
-                        y: 0.0,
-                        z: z as f32,
-                    } - INSTANCE_DISPLACEMENT;
+                    let x = SPACE_BETWEEN * (x as f32 - NUM_INSTANCES_PER_ROW as f32 / 2.0);
+                    let y = 0.0;
+                    let z = SPACE_BETWEEN * (z as f32 - NUM_INSTANCES_PER_ROW as f32 / 2.0);
+                    let position = Vec3::new(x, y, z);
 
                     let rotation = if position == Vec3::ZERO {
                         // this is needed so an object at (0, 0, 0) won't get scaled to zero
@@ -297,6 +305,10 @@ impl<'a> State<'a> {
             usage: wgpu::BufferUsages::VERTEX,
         });
 
+        let obj_model = load_model("cube/cube.obj", &device, &queue, &texture_bind_group_layout)
+            .await
+            .unwrap();
+
         Self {
             window,
             surface,
@@ -317,6 +329,7 @@ impl<'a> State<'a> {
             input: Default::default(),
             instances,
             instance_buffer,
+            model: obj_model,
         }
     }
 
@@ -412,14 +425,12 @@ impl<'a> State<'a> {
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(
-                0..TEST_INDICES.len() as u32,
-                0,
+
+            use primitives::ModelRender;
+            render_pass.render_model_instanced(
+                &self.model,
+                &self.camera_bind_group,
                 0..self.instances.len() as u32,
             );
         }
