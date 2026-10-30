@@ -24,5 +24,12 @@ Cargo.lock
 
 /target
 
+# Scratch
+Temp/
+
+# Tool caches
+.obsidian/
+.wakatime-project
+
 # Rust Rover generated files
 .idea/
