@@ -3,6 +3,9 @@ name = "eqx_prelude"
 version = "0.1.0"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [dependencies]
 eqx_app = { path = "../eqx_app", version = "0.1.0" }
 eqx_window = { path = "../eqx_window", version = "0.1.0" }

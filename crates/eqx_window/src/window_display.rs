@@ -27,7 +27,6 @@ use winit::{
 const VS_MAIN: &str = "vs_main";
 const FS_MAIN: &str = "fs_main";
 
-#[allow(dead_code)]
 struct State<'a> {
     // window handle
     window: &'a WInitWindow,
@@ -39,12 +38,15 @@ struct State<'a> {
     size: winit::dpi::PhysicalSize<u32>,
     render_pipeline: wgpu::RenderPipeline,
     // buffer
+    #[expect(dead_code, reason = "test geometry, unused while render draws `model`")]
     vertex_buffer: wgpu::Buffer,
+    #[expect(dead_code, reason = "test geometry, unused while render draws `model`")]
     index_buffer: wgpu::Buffer,
     camera_buffer: wgpu::Buffer,
     depth_texture: Texture,
     // bind groups
     camera_bind_group: wgpu::BindGroup,
+    #[expect(dead_code, reason = "test texture, unused while render draws `model`")]
     texture_bind_group: wgpu::BindGroup,
     // camera & misc
     camera: Camera,

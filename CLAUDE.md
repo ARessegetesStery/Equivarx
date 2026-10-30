@@ -6,11 +6,11 @@ This file provides project-wide guidance to Claude Code (claude.ai/code).
 
 Equivarx is a Rust game engine: a Cargo workspace whose root package `equivarx` re-exports the public API of its member crates. Rendering goes through wgpu and windowing through winit.
 
-- `crates/` -- the workspace's library crates. `eqx_app` holds `App` and the `Module` trait through which engine modules are loaded and started. `eqx_core` holds the macros that locate shaders and assets (`shader_src_from!`, `asset_file_path!`). `eqx_window` holds the window and wgpu setup (`WindowDisplay`) and the basic rendering facilities (camera, primitives, texture). `eqx_render` is reserved for deeper rendering algorithms and holds no engine code. `eqx_prelude` gathers the re-exports behind the root package.
+- `crates/` -- the workspace's library crates. `eqx_app` holds `App` and the `Module` trait through which engine modules are loaded and started. `eqx_utils` holds the keyboard state (`Input`) and the macros that locate shaders and assets (`shader_src_from!`, `asset_file_path!`). `eqx_window` holds the window, wgpu setup and render loop (`WindowDisplay`) and the basic rendering facilities (camera and its controller, model and instance primitives, textures, and model and texture loading). `eqx_render` is reserved for deeper rendering algorithms and holds no engine code. `eqx_prelude` gathers the re-exports behind the root package.
 - `src/lib.rs` -- the root package `equivarx`, which re-exports `eqx_prelude`.
-- `examples/hello_cube/` -- the example binary, which runs `WindowDisplay` through `App`.
+- `examples/hello_cube/` -- the example binary, which runs `WindowDisplay` through `App`. Its build script copies `assets/` into Cargo's `OUT_DIR`, where `eqx_window` loads them from at run time.
 - `shaders/` -- WGSL shaders, read from disk by path at run time.
-- `assets/` -- textures (`assets/texture/`) and images the repository itself uses (`assets/_repo/`).
+- `assets/` -- textures (`assets/texture/`), models (`assets/cube/`) and images the repository itself uses (`assets/_repo/`).
 - `docs/` -- `memory/` holds the project memory (below). `lodestar/` holds the point-in-time records the `lodestar` skills write at their default paths -- dated specs, plans, handoffs, reports and wrap-ups: cite them by dated filename and never rewrite them to match later work. Run ledgers are not tracked: they live under `Temp/lodestar/`, and a run's tracked record is its report or wrap-up under `docs/lodestar/` plus its memory entry.
 - `Temp/` -- gitignored scratch.
 - `.github/workflows/build.yml` -- CI: `cargo check` on Windows, Linux and macOS, plus the format, lint and doc checks below on Linux.
@@ -28,8 +28,9 @@ Run everything from the repo root. This section names the entry points, not what
 
 ## Coding conventions
 
-- Formatting is rustfmt's and lints are clippy's, at their defaults; the repository configures neither.
+- Formatting is rustfmt's, at its defaults. Lints are the compiler's and clippy's defaults plus those in the root `Cargo.toml`'s `[workspace.lints]`, which every package inherits.
 - Acronyms follow Rust's convention and are word-cased inside type names (`IpcModel`, `BvhNode`).
+- Treat compiler and clippy diagnostics as design feedback: fix the cause rather than quieting the diagnostic. Do not reach for `#[allow]`, `.clone()`, `Arc<Mutex<_>>`, `Rc<RefCell<_>>`, `unsafe` or a lifetime parameter merely to make an error go away. Where one of them is the right design, say why: `#[expect(..., reason = "...")]` for a lint, `// SAFETY:` for `unsafe`, a comment otherwise. When the borrow checker resists a design, raise it as a design question instead of working around it.
 
 ## Project memory
 

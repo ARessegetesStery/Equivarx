@@ -3,6 +3,9 @@ name = "hello_cube"
 version = "0.1.0"
 edition = "2021"
 
+[lints]
+workspace = true
+
 [dependencies]
 equivarx = { path = "../../", version = "0.1.0" }
 tokio = { version = "1.47", features = ["macros"] }

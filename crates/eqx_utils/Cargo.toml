@@ -3,6 +3,9 @@ name = "eqx_utils"
 version = "0.1.0"
 edition = "2021"
 
+[lints]
+workspace = true
+
 [dependencies]
 eqx_app = { path = "../eqx_app", version = "0.1.0" }
 winit = "0.29"

@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 pub struct Texture {
-    #[allow(unused)]
+    #[expect(dead_code, reason = "owns the GPU texture behind `view`; never read")]
     texture: wgpu::Texture,
     pub view: wgpu::TextureView,
     pub sampler: wgpu::Sampler,

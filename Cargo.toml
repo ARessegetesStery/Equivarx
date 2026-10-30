@@ -7,5 +7,16 @@ edition = "2021"
 resolver = "2"
 members = ["crates/*", "examples/*"]
 
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "warn"
+
+[workspace.lints.clippy]
+allow_attributes = "warn"
+allow_attributes_without_reason = "warn"
+undocumented_unsafe_blocks = "warn"
+
+[lints]
+workspace = true
+
 [dependencies]
 eqx_prelude = { path = "crates/eqx_prelude", version = "0.1.0" }
