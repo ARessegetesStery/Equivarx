@@ -11,7 +11,7 @@ Equivarx is a Rust game engine: a Cargo workspace whose root package `equivarx` 
 - `examples/hello_cube/` -- the example binary, which runs `WindowDisplay` through `App`. Its build script copies `assets/` into Cargo's `OUT_DIR`, where `eqx_window` loads them from at run time.
 - `shaders/` -- WGSL shaders, read from disk by path at run time.
 - `assets/` -- textures (`assets/texture/`), models (`assets/cube/`) and images the repository itself uses (`assets/_repo/`).
-- `docs/` -- `memory/` holds the project memory (below). `lodestar/` holds the point-in-time records the `lodestar` skills write at their default paths -- dated specs, plans, handoffs, reports and wrap-ups: cite them by dated filename and never rewrite them to match later work. Run ledgers are not tracked: they live under `Temp/lodestar/`, and a run's tracked record is its report or wrap-up under `docs/lodestar/` plus its memory entry.
+- `docs/` -- `memory/` holds the project memory (below). `roadmap/` holds living development plans, revised in place: `rendering.md` is the rendering roadmap. `lodestar/` holds the point-in-time records the `lodestar` skills write at their default paths -- dated specs, plans, handoffs, reports and wrap-ups: cite them by dated filename and never rewrite them to match later work. Run ledgers are not tracked: they live under `Temp/lodestar/`, and a run's tracked record is its report or wrap-up under `docs/lodestar/` plus its memory entry.
 - `Temp/` -- gitignored scratch.
 - `.github/workflows/build.yml` -- CI: `cargo check` on Windows, Linux and macOS, plus the format, lint and doc checks below on Linux.
 
