@@ -22,7 +22,6 @@ impl App {
 
     pub fn run(&mut self) {
         for module in &mut self.enabled_modules {
-            module.setup();
             module.init();
         }
     }
