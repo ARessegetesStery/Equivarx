@@ -1,0 +1,206 @@
+<title>Equivarx Architecture</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  Page template of the Claude artifact "Equivarx Architecture". It holds no architecture
+  content. Publishing copies docs/architecture.md into the empty text/markdown script element
+  below (the build command is in CLAUDE.md), and the page renders that copy, drawing mermaid
+  code blocks as diagrams. To change the content, edit docs/architecture.md, rebuild, and
+  republish. The markdown must not contain a closing script tag.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column that renders docs/architecture.md; diagrams sit in framed panels. The accent is the renderer's own clear color, rgb(0.2, 0.4, 0.5). */
+:root {
+  --bg: #f3f6f7;
+  --surface: #ffffff;
+  --fg: #162025;
+  --muted: #55656d;
+  --line: #d2dce0;
+  --line-strong: #a7bac2;
+  --accent: #336680;
+  --accent-soft: #e0ecf1;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1518;
+    --surface: #151e22;
+    --fg: #dfe7ea;
+    --muted: #91a1a9;
+    --line: #28353b;
+    --line-strong: #43565e;
+    --accent: #80b4cc;
+    --accent-soft: #1b2b33;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1518;
+  --surface: #151e22;
+  --fg: #dfe7ea;
+  --muted: #91a1a9;
+  --line: #28353b;
+  --line-strong: #43565e;
+  --accent: #80b4cc;
+  --accent-soft: #1b2b33;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+}
+.page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 28px;
+}
+.eyebrow { margin: 0; font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); letter-spacing: 0.02em; }
+
+/* Rendered markdown */
+.doc { display: grid; gap: 16px; min-width: 0; }
+.doc > * { margin: 0; min-width: 0; }
+.doc h1, .doc h2, .doc h3 { font-family: var(--font-display); text-wrap: balance; letter-spacing: -0.01em; line-height: 1.15; }
+.doc h1 { font-size: clamp(2rem, 6vw, 2.8rem); font-weight: 700; line-height: 1.05; margin-bottom: 4px; }
+.doc h2 { font-size: 1.4rem; font-weight: 600; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); }
+.doc h3 { font-size: 1.1rem; font-weight: 600; margin-top: 8px; }
+.doc p, .doc li { max-width: 70ch; }
+.doc a { color: var(--accent); text-underline-offset: 3px; }
+.doc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.doc ul, .doc ol { padding-left: 1.3em; display: grid; gap: 8px; }
+.doc li::marker { color: var(--accent); }
+.doc code { font-family: var(--font-mono); font-size: 0.86em; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.doc pre { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; }
+.doc pre code { background: none; padding: 0; overflow-wrap: normal; }
+.table-wrap { overflow-x: auto; }
+.doc table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+.doc th, .doc td { text-align: left; vertical-align: top; padding: 8px 14px 8px 0; border-bottom: 1px solid var(--line); }
+.doc th { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.doc td:first-child { white-space: nowrap; }
+.diagram { margin: 0; overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; }
+.diagram svg { display: block; margin: 0 auto; height: auto; }
+.status { color: var(--muted); }
+.status.error { color: var(--fg); border-left: 3px solid var(--accent); padding-left: 12px; }
+
+footer { font-size: 0.9rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+footer code { font-family: var(--font-mono); font-size: 0.86em; }
+</style>
+
+<main class="page">
+  <p class="eyebrow">docs/architecture.md</p>
+  <article id="doc" class="doc" aria-live="polite">
+    <p class="status">Rendering docs/architecture.md.</p>
+  </article>
+  <footer>Rendered from <code>docs/architecture.md</code> in the Equivarx repository, the single source of this page.</footer>
+</main>
+
+<script type="text/markdown" id="architecture-md" data-embed="docs/architecture.md">
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var doc = document.getElementById("doc");
+  var diagrams = [];
+  var renderCount = 0;
+
+  function token(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  function showError(message) {
+    doc.innerHTML = "";
+    var p = document.createElement("p");
+    p.className = "status error";
+    p.textContent = message;
+    doc.appendChild(p);
+  }
+
+  // Diagrams take their colors from the page tokens, so they are redrawn when the theme changes.
+  function mermaidConfig() {
+    return {
+      startOnLoad: false,
+      securityLevel: "strict",
+      theme: "base",
+      flowchart: { curve: "basis", padding: 12 },
+      themeVariables: {
+        background: token("--surface"),
+        primaryColor: token("--surface"),
+        primaryTextColor: token("--fg"),
+        primaryBorderColor: token("--line-strong"),
+        secondaryColor: token("--accent-soft"),
+        tertiaryColor: token("--surface"),
+        lineColor: token("--muted"),
+        textColor: token("--fg"),
+        edgeLabelBackground: token("--surface"),
+        fontFamily: token("--font-body"),
+        fontSize: "15px"
+      }
+    };
+  }
+
+  async function renderDiagrams() {
+    if (!window.mermaid || diagrams.length === 0) return;
+    window.mermaid.initialize(mermaidConfig());
+    for (var i = 0; i < diagrams.length; i++) {
+      var d = diagrams[i];
+      renderCount += 1;
+      try {
+        var result = await window.mermaid.render("eqx-diagram-" + renderCount, d.source);
+        d.host.innerHTML = result.svg;
+      } catch (e) {
+        d.host.innerHTML = "";
+        var pre = document.createElement("pre");
+        pre.textContent = d.source;
+        d.host.appendChild(pre);
+      }
+    }
+  }
+
+  function render() {
+    if (!window.marked) {
+      showError("The markdown renderer did not load, so docs/architecture.md cannot be shown here.");
+      return;
+    }
+    var source = document.getElementById("architecture-md");
+    var text = source ? source.textContent.trim() : "";
+    if (!text) {
+      showError("This page was published without docs/architecture.md embedded. Build it with the command in CLAUDE.md, then republish.");
+      return;
+    }
+    doc.innerHTML = window.marked.parse(text);
+    doc.querySelectorAll("pre > code.language-mermaid").forEach(function (code) {
+      var host = document.createElement("figure");
+      host.className = "diagram";
+      diagrams.push({ host: host, source: code.textContent });
+      code.parentElement.replaceWith(host);
+    });
+    doc.querySelectorAll("table").forEach(function (table) {
+      var wrap = document.createElement("div");
+      wrap.className = "table-wrap";
+      table.replaceWith(wrap);
+      wrap.appendChild(table);
+    });
+    renderDiagrams();
+  }
+
+  var scheme = window.matchMedia("(prefers-color-scheme: dark)");
+  if (scheme.addEventListener) scheme.addEventListener("change", renderDiagrams);
+  new MutationObserver(renderDiagrams).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  render();
+})();
+</script>

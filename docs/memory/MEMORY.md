@@ -8,3 +8,4 @@ Imported by `CLAUDE.md` and loaded every session. One line per memory, each link
 - [Single-consumer code stays put](single-consumer-code-stays-put.md) -- OWNER RULE: code serving one consumer stays with it until a second, exactly matching use case appears
 - [Docs are reference, not changelog](docs-are-reference-not-changelog.md) -- documentation of code is revised in place, never appended to
 - [Rendering first](rendering-first-roadmap.md) -- why the renderer comes before engine systems, and where each is planned (2026-11-01)
+- [Architecture doc at design altitude](architecture-doc-design-altitude.md) -- docs/architecture.md holds only design-level facts, is its artifact's single source, and changes at design decisions (2026-11-06)

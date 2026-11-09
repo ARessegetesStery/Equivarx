@@ -37,7 +37,7 @@ The owner has a strong physics simulation background, and their graphics knowled
 3. **Predict.** Before anything is built, the owner writes down predictions, using the stage's prompts as a start. These go into the stage's dated record under `docs/lodestar/`.
 4. **Build.** Agents implement. Every task that can be checked through the bench (Stage 0) is checked that way without the owner watching.
 5. **Compare.** Measure against the predictions and exit criteria. Treat each surprise as the next thing to teach.
-6. **Close.** The owner rules on the judged criteria by looking at the result. Then revise this file in place and update the project memory.
+6. **Close.** The owner rules on the judged criteria by looking at the result. Then revise this file in place, bring `docs/architecture.md` up to date with the stage's design changes and republish its artifact, and update the project memory.
 
 Exit criteria are either measured, which an agent can verify alone, or judged, which only the owner can rule on.
 
