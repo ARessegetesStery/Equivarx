@@ -12,17 +12,18 @@ The end state is one continuous camera route that runs on budget and looks right
 
 ## 2. Settled decisions
 
-Settled with the owner on 2026-11-01. Reopen one only if a measurement or a design change contradicts its reasoning.
+Settled with the owner on 2026-11-01, except where a row gives its own date. Reopen one only if a measurement or a design change contradicts its reasoning.
 
 | Decision | Reasoning |
 |---|---|
 | Rendering comes first; the engine roadmap takes its place after Stage 5 | Rendering holds the hardest planned features and most of what the owner wants to learn. The CPU has little to do yet: the game's spine and shroud cost about 0.1 ms per tick at 5x12 (`occ/docs/memory/shroud-next-steps.md`) |
 | Target is the owner's machine: RTX 4070 Laptop GPU, i9-14900HX, 1080p, 60 fps | The project is for fun rather than for release (`occ/docs/memory/project-direction-for-fun.md`), and supporting weaker GPUs would rule out techniques |
 | All mist work shares about 5 ms of the 16.6 ms frame | Mist is the game's principal technical differentiator, but surfaces and post-processing also need room. Section 5 splits it |
-| Close mist inside architecture and landscape-scale far mist are both first-class | Both are essential to the game, and they are different problems (Section 4) |
+| Close mist inside architectur1e and landscape-scale far mist are both first-class | Both are essential to the game, and they are different problems (Section 4) |
 | The two worlds are two different rendering problems | They occupy the same space, but most rendering configuration differs between them. Do not design the mist side as a tint on the physical world |
 | The look is physically grounded, with deliberate breaks | This keeps a path-traced reference meaningful for checking and teaching. One-way transparency is the first deliberate break, because the design requires it and physical light transport cannot produce it |
-| Nothing is built beyond what Occluscence needs | No custom editor or general-purpose engine features: Blender for content, an in-game inspector for tuning. This keeps the target content feasible for one person |
+| Nothing is built beyond what Occluscence needs | No custom editor or general-purpose engine features; an in-game inspector for tuning. This keeps the target content feasible for one person |
+| Content is authored as code, not in a modelling tool (2026-11-11) | The owner judges content by eye and does not edit it by hand, so agents make every revision. An agent can revise a program that builds geometry in a small diff the owner can review, where a model file can only be replaced whole. One description also serves every consumer: the mesh to draw, the shape to collide with, and the field that shapes mist. The art direction of sparse geometry and silhouettes is within reach of this; hand-sculpted organic detail is not, and the game does not ask for it |
 | No mist rendering in Godot; the owner experiments with time mechanisms there | Mist shaders written against Godot would be thrown away. Findings from the time experiments feed Stages 5 and 7 |
 | Each concept is taught in conversation with the math derived, plus one or two primary sources | Owner's choice of learning format. Section 3 gives the procedure |
 | The graphics API stays wgpu | See `docs/memory/engine-direction.md`. Propose something lower-level only if an algorithm needs what wgpu does not expose |
@@ -80,6 +81,7 @@ The slices add up rather than overlap. wgpu exposes a single queue with no async
 
 - **Rasterize surfaces; raymarch mist in compute shaders.** Hardware ray tracing is not needed, and wgpu offers it only as an experimental feature.
 - **The renderer is a function of a per-frame description.** It receives the camera, lights, mesh instances, mist field descriptions and time, and knows nothing about game state. Test replays fill the description now, and the engine roadmap fills it later. Reversed replay in Stage 6 then becomes feeding recorded descriptions backward.
+- **Content is code.** The world the route passes through from Stage 1 on (the test building, terrain and placed mist masses) is described by programs kept as text in this repository. Meshes, collision shapes and mist fields are derived from those programs and never edited by hand, and no stage depends on a modelling tool. The renderer still receives only the per-frame description, which content code fills with mesh instances and mist field descriptions.
 - **GPU results never drive gameplay.** GPU simulation may differ across hardware and reading it back adds lag, either of which would break the game's deterministic replay (`occ/Impl-Doc.md`, cross-file rules). Gameplay reads a CPU-owned field, which the engine roadmap provides; GPU detail is visual only.
 - **One reference route.** A single camera path through one test world grows stage by stage: overlook, approach, interior, wall, crossing, mist side. Each stage adds its segment, and earlier segments become regression tests.
 - **The shroud arrives as recorded data, not as a port.** The game's harness already writes JSONL trajectories (`occ/game/utils/test_tools/headless_harness/trajectory_recorder.gd`) with per-tick `player`, `spine` and `shroud` positions, in ring-major grid order `r * C + c`. Replaying these gives real motion and keeps this roadmap independent of the engine roadmap.
@@ -133,17 +135,18 @@ Part A runs first. Stages 4 and 5 both build on Stage 3 but not on each other, s
 **Learn.** Radiance and irradiance; diffuse and GGX specular reflection; HDR and exposure; shadow maps, cascades and filtering; tonemapping; bloom; temporal anti-aliasing and motion vectors; reversed depth for kilometer ranges. Sources: RTR4 chapters 7 to 9; Pettineo; Karis; Jimenez; Gjoel and Svendsen.
 
 **Build.**
-- The test world: a building with thin walls, windows and a long sightline outdoors.
+- The test world: a building with thin walls, windows and a long sightline outdoors, built by code as the first content under the Section 6 rule.
+- A content preview on top of the headless mode: one command renders a single piece of content alone from a fixed set of angles, so an agent can look at what it built before the owner does.
 - A forward surface pass with a depth prepass, one directional light and a few shadowed local lights.
 - An HDR target, exposure, tonemapping, bloom and dithering against banding.
 - Temporal anti-aliasing with jitter and motion vectors.
 - A placeholder HDR sky, and reversed depth with a far plane suited to landscapes.
 
-**Exit.** Measured: surfaces and post-processing stay within budget on the route so far. Judged: a dark silhouette room looks deliberate, and camera motion shows no distracting ghosting.
+**Exit.** Measured: surfaces and post-processing stay within budget on the route so far; the test world is produced from its code alone, with no model file; the time from a content edit to a preview image is recorded. Judged: a dark silhouette room looks deliberate, and camera motion shows no distracting ghosting; a remark from the owner about the building's shape comes back as a change to its code that the owner can follow.
 
 **Predict.** Where does banding appear first? How far can shadow cascades reach before the resolution shows?
 
-**Owner decides.** Tonemapper; forward or deferred (recommended: forward, since lights are few and translucency matters).
+**Owner decides.** Tonemapper; forward or deferred (recommended: forward, since lights are few and translucency matters); how content code describes shape (recommended: meshes built directly from parametric parts for architecture, because meshing a signed field rounds off hard edges and thin walls, with signed fields kept for mist); whether content code is Rust or data loaded at run time (recommended: Rust, since a content format is a general-purpose feature the game does not need, at the cost of a rebuild for each content edit).
 
 ### Stage 2: Light in a medium
 
@@ -265,7 +268,7 @@ The engine roadmap replaces the earlier idea of a parallelism stage here. It is 
 - The world model, including whether to use an ECS.
 - The CPU-owned time-rate field for gameplay, per-object time rates, and state history for reversal.
 - Porting the tail, spine, shroud and player to Rust, using recorded trajectories from the game's harness to check equivalence.
-- Collision, audio, note text, and the level pipeline (Blender with an in-game inspector).
+- Collision, audio, note text, and the level pipeline: levels authored as code under the Section 6 rule, collision shapes derived from the same descriptions as the meshes, and an in-game inspector for tuning.
 - Moving Occluscence in. The first scene to aim for is the design document's prototype: one room, one mist boundary, one stabilizer.
 
 ## 9. Open questions
