@@ -1,5 +1,4 @@
 use equivarx::{App, WindowDisplay};
-use tokio;
 
 #[tokio::main]
 async fn main() {
