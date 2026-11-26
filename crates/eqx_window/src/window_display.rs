@@ -14,24 +14,25 @@ use eqx_utils::{
 
 use crate::{primitives, texture};
 use glam::{Quat, Vec3};
+use std::sync::Arc;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{BindGroupLayoutDescriptor, Trace};
 use winit::{
-    event::*,
-    event_loop::EventLoop,
+    application::ApplicationHandler,
+    event::{ElementState, KeyEvent, WindowEvent},
+    event_loop::{ActiveEventLoop, EventLoop},
     keyboard::{KeyCode, PhysicalKey},
-    window::Window as WInitWindow,
-    window::WindowBuilder,
+    window::{Window as WInitWindow, WindowId},
 };
 
 const VS_MAIN: &str = "vs_main";
 const FS_MAIN: &str = "fs_main";
 
-struct State<'a> {
+struct State {
     // window handle
-    window: &'a WInitWindow,
+    window: Arc<WInitWindow>,
     // rendering pipeline
-    surface: wgpu::Surface<'a>,
+    surface: wgpu::Surface<'static>,
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
@@ -60,9 +61,9 @@ struct State<'a> {
     model: Model,
 }
 
-impl<'a> State<'a> {
+impl State {
     /// Accepts only mesh with counter-clockwise winding
-    async fn new(window: &'a WInitWindow) -> State<'a> {
+    async fn new(window: Arc<WInitWindow>) -> State {
         let size = window.inner_size();
 
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
@@ -70,7 +71,7 @@ impl<'a> State<'a> {
             ..Default::default()
         });
 
-        let surface = instance.create_surface(window).unwrap();
+        let surface = instance.create_surface(Arc::clone(&window)).unwrap();
 
         let adaptor = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -111,6 +112,9 @@ impl<'a> State<'a> {
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
+        if config.width > 0 && config.height > 0 {
+            surface.configure(&device, &config);
+        }
 
         let rel_texture_path = "texture/test_tree.png";
         let texture = load_texture(
@@ -336,7 +340,7 @@ impl<'a> State<'a> {
     }
 
     fn window(&self) -> &WInitWindow {
-        self.window
+        &self.window
     }
 
     fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
@@ -345,31 +349,27 @@ impl<'a> State<'a> {
             self.config.width = size.width;
             self.config.height = size.height;
             self.surface.configure(&self.device, &self.config);
+            self.depth_texture =
+                Texture::create_depth_texture(&self.device, &self.config, "DepthTexture");
         }
-
-        self.depth_texture =
-            Texture::create_depth_texture(&self.device, &self.config, "DepthTexture");
     }
 
-    fn process_input(&mut self, event: &WindowEvent) -> bool {
-        match event {
-            WindowEvent::KeyboardInput {
-                event:
-                    KeyEvent {
-                        state,
-                        physical_key: PhysicalKey::Code(code),
-                        ..
-                    },
-                ..
-            } => {
-                let state = match state {
-                    ElementState::Pressed => KeyState::Pressed,
-                    ElementState::Released => KeyState::Released,
-                };
-                self.input.record(code.clone(), state);
-                true
-            }
-            _ => false,
+    fn process_input(&mut self, event: &WindowEvent) {
+        if let WindowEvent::KeyboardInput {
+            event:
+                KeyEvent {
+                    state,
+                    physical_key: PhysicalKey::Code(code),
+                    ..
+                },
+            ..
+        } = event
+        {
+            let state = match state {
+                ElementState::Pressed => KeyState::Pressed,
+                ElementState::Released => KeyState::Released,
+            };
+            self.input.record(*code, state);
         }
     }
 
@@ -444,70 +444,87 @@ impl<'a> State<'a> {
     }
 }
 
-// TODO: refactor this class, so that more utilities (e.g. `Input`) can be integrated
+#[derive(Default)]
+struct DisplayHandler {
+    state: Option<State>,
+}
+
+impl ApplicationHandler for DisplayHandler {
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        if self.state.is_none() {
+            let window = Arc::new(
+                event_loop
+                    .create_window(WInitWindow::default_attributes())
+                    .unwrap(),
+            );
+            let state = pollster::block_on(State::new(window));
+            state.window().request_redraw();
+            self.state = Some(state);
+        }
+    }
+
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        window_id: WindowId,
+        event: WindowEvent,
+    ) {
+        let Some(state) = self.state.as_mut() else {
+            return;
+        };
+        if window_id != state.window().id() {
+            return;
+        }
+
+        state.process_input(&event);
+        match event {
+            WindowEvent::CloseRequested
+            | WindowEvent::KeyboardInput {
+                event:
+                    KeyEvent {
+                        state: ElementState::Pressed,
+                        physical_key: PhysicalKey::Code(KeyCode::Escape),
+                        ..
+                    },
+                ..
+            } => event_loop.exit(),
+            WindowEvent::Resized(physical_size) => {
+                state.resize(physical_size);
+            }
+            WindowEvent::RedrawRequested => {
+                state.window().request_redraw();
+                state.update();
+
+                match state.render() {
+                    Ok(_) => {}
+                    Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                        state.resize(state.size);
+                    }
+                    Err(wgpu::SurfaceError::OutOfMemory | wgpu::SurfaceError::Other) => {
+                        log::error!("Out of memory");
+                        event_loop.exit();
+                    }
+                    Err(wgpu::SurfaceError::Timeout) => {
+                        log::error!("Timeout");
+                        event_loop.exit();
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct WindowDisplay {}
 
 impl Module for WindowDisplay {
     fn setup(&mut self) {}
 
-    // TODO: make this async, so non-rendering updates can be done here as well. This is also *loop*, not init.
     fn init(&mut self) {
         let event_loop = EventLoop::new().unwrap();
-        let window = WindowBuilder::new().build(&event_loop).unwrap();
-        let mut state = pollster::block_on(async { State::new(&window).await });
-
-        event_loop
-            .run(move |event, control_flow| match event {
-                Event::WindowEvent {
-                    ref event,
-                    window_id,
-                } if window_id == state.window.id() => {
-                    if !state.process_input(event) {
-                        match event {
-                            WindowEvent::CloseRequested
-                            | WindowEvent::KeyboardInput {
-                                event:
-                                    KeyEvent {
-                                        state: ElementState::Pressed,
-                                        physical_key: PhysicalKey::Code(KeyCode::Escape),
-                                        ..
-                                    },
-                                ..
-                            } => control_flow.exit(),
-                            WindowEvent::Resized(physical_size) => {
-                                state.resize(*physical_size);
-                            }
-                            WindowEvent::RedrawRequested => {
-                                state.window().request_redraw();
-                                state.update();
-
-                                match state.render() {
-                                    Ok(_) => {}
-                                    Err(
-                                        wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated,
-                                    ) => {
-                                        state.resize(state.size);
-                                    }
-                                    Err(
-                                        wgpu::SurfaceError::OutOfMemory | wgpu::SurfaceError::Other,
-                                    ) => {
-                                        log::error!("Out of memory");
-                                        control_flow.exit();
-                                    }
-                                    Err(wgpu::SurfaceError::Timeout) => {
-                                        log::error!("Timeout");
-                                        control_flow.exit();
-                                    }
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                }
-                _ => {}
-            })
-            .unwrap();
+        let mut handler = DisplayHandler::default();
+        event_loop.run_app(&mut handler).unwrap();
     }
 
     fn update(&mut self) {}

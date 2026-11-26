@@ -111,7 +111,7 @@ Part A runs first. Stages 4 and 5 both build on Stage 3 but not on each other, s
 **Learn.** How a frame reaches the screen: command encoding, render and compute passes, vertex to rasterizer to fragment, depth, how GPU timing differs from CPU timing. What wgpu handles automatically compared with Vulkan or DirectX 12 (resource barriers, memory). Sources: Giesen; RTR4 chapters 2 and 3.
 
 **Build.**
-- Upgrade wgpu (currently 26) and winit (currently 0.29) to current releases.
+- Upgrade wgpu (currently 26) to a current release (winit is on 0.30).
 - Separate device and surface ownership from the renderer, and give the renderer its per-frame description.
 - A frame loop sufficient for rendering work. `Module::init` currently blocks forever and `Module::update` never runs; the full simulation loop belongs to the engine roadmap.
 - A small declared pass list: order, inputs and outputs, and screen-size-dependent textures. wgpu handles barriers, so this stays small.

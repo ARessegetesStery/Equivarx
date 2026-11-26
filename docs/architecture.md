@@ -34,7 +34,7 @@ wgpu provides the GPU API, winit the window and its events, and glam the math.
 
 ## Ownership
 
-`WindowDisplay` is the only module. When started, it creates the window and a single `State` struct that owns the GPU device and surface, the render pipeline, the scene, the camera and the keyboard state, and borrows the window. No other crate holds GPU objects.
+`WindowDisplay` is the only module. When started, it runs winit's event loop with an internal `ApplicationHandler` that creates a shared (`Arc`) window on resume and a single `State` struct owning the window handle, the GPU device and `'static` surface, the render pipeline, the scene, the camera and the keyboard state. No other crate holds GPU objects.
 
 ## Frame and data flow
 
@@ -60,7 +60,6 @@ flowchart TD
 What the current design does not support, measured against the rendering roadmap's rules.
 
 - `Module::init` holds the event loop and never returns, so `Module::update` never runs and a module loaded after `WindowDisplay` never starts.
-- `State` borrows the window, so the window, the surface and the renderer must live in the one stack frame that never returns.
 - The renderer is not a function of a per-frame description: device, surface, pipeline, scene and camera are one struct, with no headless path and no pass list.
 - Shaders and assets are located through paths on the machine that built the code, and the example runs only with `OUT_DIR` set by hand.
 - `eqx_render` holds no code.
