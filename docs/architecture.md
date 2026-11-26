@@ -25,7 +25,7 @@ flowchart TD
 | `hello_cube` | Example binary that runs the engine through `App` |
 | `equivarx` | Root package: the engine's public API, re-exported from `eqx_prelude` |
 | `eqx_prelude` | Gathers each crate's public items into one prelude |
-| `eqx_app` | Application shell: `App` loads `Module`s and starts them |
+| `eqx_app` | Application shell: `App` owns the core async I/O runtime (`IoRuntime`), loads `Module`s and starts them |
 | `eqx_window` | Window, GPU device and surface, the render loop, and basic rendering (camera, meshes, textures, asset loading) |
 | `eqx_utils` | Utilities shared by engine crates: keyboard state, shader and asset path lookup |
 | `eqx_render` | Reserved for deeper rendering algorithms such as mist; holds no code yet |
@@ -34,7 +34,7 @@ wgpu provides the GPU API, winit the window and its events, and glam the math.
 
 ## Ownership
 
-`WindowDisplay` is the only module. When started, it runs winit's event loop with an internal `ApplicationHandler` that creates a shared (`Arc`) window on resume and a single `State` struct owning the window handle, the GPU device and `'static` surface, the render pipeline, the scene, the camera and the keyboard state. No other crate holds GPU objects.
+`App` owns the core async I/O runtime (`IoRuntime`, backed by Tokio) and passes it to modules when starting them. `WindowDisplay` is the only module. When started, it runs winit's event loop with an internal `ApplicationHandler` that creates a shared (`Arc`) window on resume and a single `State` struct owning the window handle, the GPU device and `'static` surface, the render pipeline, the scene, the camera and the keyboard state. No other crate holds GPU objects.
 
 ## Frame and data flow
 

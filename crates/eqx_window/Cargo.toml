@@ -15,8 +15,7 @@ glam = "0.30"
 eqx_app = { path = "../eqx_app", version = "0.1.0" }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 log = "0.4"
-pollster = "0.2"
 tobj = { version = "4.0.3", default-features = false, features = ["async", "tokio"] }
-tokio = { version = "1.47", features = ["rt-multi-thread"] }
+tokio = { version = "1.47", features = ["fs"] }
 winit = "0.30"
 wgpu = "26.0"

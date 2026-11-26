@@ -6,7 +6,7 @@ use crate::primitives::{
 use crate::primitives::{Model, ModelRender};
 use crate::resource::{file_name_to_path, load_model, load_texture};
 use crate::texture::Texture;
-use eqx_app::prelude::Module;
+use eqx_app::prelude::{IoRuntime, Module};
 use eqx_utils::{
     input::{Input, KeyState},
     shader_src_from,
@@ -444,12 +444,12 @@ impl State {
     }
 }
 
-#[derive(Default)]
-struct DisplayHandler {
+struct DisplayHandler<'a> {
+    runtime: &'a IoRuntime,
     state: Option<State>,
 }
 
-impl ApplicationHandler for DisplayHandler {
+impl ApplicationHandler for DisplayHandler<'_> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.state.is_none() {
             let window = Arc::new(
@@ -457,7 +457,7 @@ impl ApplicationHandler for DisplayHandler {
                     .create_window(WInitWindow::default_attributes())
                     .unwrap(),
             );
-            let state = pollster::block_on(State::new(window));
+            let state = self.runtime.block_on(State::new(window));
             state.window().request_redraw();
             self.state = Some(state);
         }
@@ -521,11 +521,14 @@ pub struct WindowDisplay {}
 impl Module for WindowDisplay {
     fn setup(&mut self) {}
 
-    fn init(&mut self) {
+    fn init(&mut self, runtime: &IoRuntime) {
         let event_loop = EventLoop::new().unwrap();
-        let mut handler = DisplayHandler::default();
+        let mut handler = DisplayHandler {
+            runtime,
+            state: None,
+        };
         event_loop.run_app(&mut handler).unwrap();
     }
 
-    fn update(&mut self) {}
+    fn update(&mut self, _runtime: &IoRuntime) {}
 }
