@@ -17,12 +17,12 @@ pub fn file_name_to_path(file_name: &str) -> Result<PathBuf> {
 }
 
 pub async fn load_string(path: &Path) -> Result<String> {
-    let data = std::fs::read_to_string(&path)?;
+    let data = tokio::fs::read_to_string(path).await?;
     Ok(data)
 }
 
 pub async fn load_binary(path: &Path) -> Result<Vec<u8>> {
-    let data = std::fs::read(path)?;
+    let data = tokio::fs::read(path).await?;
     Ok(data)
 }
 
